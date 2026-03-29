@@ -63,4 +63,4 @@ python volume-backups.py
 ```
 
 ---
-*Created as part of DevOps Bootcamp - Automation with Python Module.*
+*Created as part of Automation with Python Module.*
