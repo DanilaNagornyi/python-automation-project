@@ -1,66 +1,93 @@
-# Python Automation for DevOps Projects 🐍 🚀
+# Website Monitoring and Recovery 🐍
 
-This repository contains a collection of Python scripts designed to automate common DevOps tasks, focusing on AWS infrastructure management, monitoring, and cloud resource handling. These projects were developed as part of a DevOps Bootcamp module to demonstrate the power of Python in automation.
+![Python](https://img.shields.io/badge/Python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![DigitalOcean](https://img.shields.io/badge/DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-0db7ed?style=for-the-badge&logo=docker&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Gmail](https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=gmail&logoColor=white)
 
----
+This capstone project from the **Automation with Python** module monitors a
+Dockerized web application running on a cloud server and performs automatic
+recovery when the application becomes unavailable.
 
-### 🛠 Technologies Used
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![DigitalOcean](https://img.shields.io/badge/DigitalOcean-%230080FF.svg?style=for-the-badge&logo=digitalocean&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![Boto3](https://img.shields.io/badge/Boto3-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)
+The original demo used Linode. I adapted the project to **DigitalOcean** because
+I could not complete Linode's account verification. The monitoring and recovery
+workflow remains the same, while the server reboot request uses the DigitalOcean
+REST API.
 
----
+## How it works
 
-### 📂 Projects Overview
+The [`monitor-website.py`](monitor-website.py) script:
 
-| Script Name | Description |
-| :--- | :--- |
-| **`monitor-website.py`** | Monitors a web application hosted on DigitalOcean, sends email alerts via SMTP if it's down, and automatically restarts Docker containers or reboots the server. |
-| **`ec2-status-checks.py`** | Regularly checks the status of AWS EC2 instances and prints their health information. |
-| **`eks-status-checks.py`** | Retrieves and displays information about AWS EKS clusters, including status, endpoint, and version. |
-| **`create-vpc.py`** | Automates the creation of an AWS VPC along with public and private subnets. |
-| **`add-env-tags.py`** | Massively applies environment tags (e.g., `prod`, `dev`) to EC2 instances across different AWS regions (Sydney and Singapore). |
-| **`volume-backups.py`** | Automates daily snapshots for AWS EBS volumes tagged with specific names (e.g., `prod`). |
-| **`cleanup-snapshots.py`** | Manages storage costs by deleting old AWS EBS snapshots, keeping only the most recent ones for each volume. |
-| **`restore-volume.py`** | Restores an EBS volume from its latest available snapshot. |
+1. Sends an HTTP request to the application every five minutes.
+2. Treats HTTP `200` as a successful health check.
+3. Sends an email alert through Gmail SMTP when the application is down.
+4. Uses Paramiko and SSH to restart the Docker container when the server is
+   reachable but the application returns an error.
+5. If the server is unreachable, requests a droplet reboot through the
+   DigitalOcean API, waits for SSH to become available, and restarts the
+   container.
 
----
+## Project flow
 
-### 🚀 Getting Started
-
-#### 1. Prerequisites
-Ensure you have Python 3.x installed on your machine.
-
-#### 2. Install Dependencies
-Install the required libraries using pip:
-```bash
-pip install boto3 requests paramiko schedule
+```text
+Scheduled HTTP check
+        |
+        +-- HTTP 200 ----------------------> Application is healthy
+        |
+        +-- HTTP error --> Email alert ----> Restart Docker container over SSH
+        |
+        +-- No connection -> Email alert --> Reboot DigitalOcean droplet
+                                             -> Restart container over SSH
 ```
 
-#### 3. Configuration
-For scripts interacting with AWS, ensure you have your credentials configured:
+## Prerequisites
+
+- Python 3
+- A DigitalOcean droplet with Docker installed
+- A running Docker container that exposes the web application
+- SSH access to the droplet
+- A Gmail account with an app password
+- A DigitalOcean API token with permission to reboot the droplet
+
+## Configuration
+
+Install the Python dependencies:
+
 ```bash
-aws configure
+python3 -m pip install -r requirements.txt
 ```
 
-For the **`monitor-website.py`** script, set the following environment variables:
-- `EMAIL_ADDRESS`: Your Gmail address.
-- `EMAIL_PASSWORD`: Your Gmail app-specific password.
-- `DIGITAL_OCEAN_TOKEN`: Your DigitalOcean API token.
-- `DIGITAL_OCEAN_DROPLET_ID`: The ID of your droplet.
+Use [`.env.example`](.env.example) as a list of the required environment
+variables and export them in your shell. For example:
+
+```bash
+export EMAIL_ADDRESS="your-email@gmail.com"
+export EMAIL_PASSWORD="your-gmail-app-password"
+export DIGITAL_OCEAN_TOKEN="your-digitalocean-api-token"
+export DIGITAL_OCEAN_DROPLET_ID="your-droplet-id"
+export SERVER_IP="your-droplet-public-ip"
+export SSH_KEY_PATH="/absolute/path/to/your/private-key"
+export CONTAINER_NAME_OR_ID="your-container-name-or-id"
+```
+
+Credentials and private keys are not stored in this repository.
+
+## Run the monitor
+
+```bash
+python3 monitor-website.py
+```
+
+The first health check runs immediately. Further checks run every five minutes,
+or at the interval configured through `MONITOR_INTERVAL_MINUTES`.
+
+## Other module exercises
+
+This repository also contains the Python automation exercises completed during
+the module: EC2 and EKS status checks, VPC creation, EC2 tagging, EBS snapshot
+backup and cleanup, and volume restoration. These scripts use Boto3 and AWS.
 
 ---
 
-### 🔧 Usage
-Run any script directly from the terminal:
-```bash
-python monitor-website.py
-```
-```bash
-python volume-backups.py
-```
-
----
-*Created as part of Automation with Python Module.*
+*Created as part of the TechWorld with Nana DevOps Bootcamp.*
