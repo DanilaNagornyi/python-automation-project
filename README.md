@@ -1,6 +1,6 @@
 # Python Automation for DevOps Projects 🐍 🚀
 
-This repository contains a collection of Python scripts designed to automate common DevOps tasks, focusing on AWS infrastructure management, monitoring, and cloud resource handling. These projects were developed as part of a DevOps Bootcamp module to demonstrate the power of Python in automation.
+This repository contains a collection of Python scripts designed to automate common DevOps tasks, focusing on AWS infrastructure management, monitoring, and cloud resource handling. All scripts use `boto3` / `requests` directly, read credentials from the environment, and are small enough to run as cron jobs, Lambda functions or Kubernetes CronJobs.
 
 ---
 
@@ -62,5 +62,13 @@ python monitor-website.py
 python volume-backups.py
 ```
 
+### 🏭 Production considerations
+
+- **Scheduling** — run via EventBridge → Lambda or a Kubernetes CronJob instead of a long-lived `schedule` loop.
+- **Observability** — structured JSON logging and a metric/alert on script failures.
+- **Resilience** — retries with backoff around AWS/DigitalOcean API calls; idempotent operations.
+- **IAM** — a dedicated role per script with the minimal set of EC2/EKS/EBS actions.
+- **Tests** — unit tests with `moto` for the boto3 paths.
 ---
-*Created as part of Automation with Python Module.*
+
+_Built as a hands-on lab during the [TechWorld with Nana DevOps Bootcamp](https://www.credly.com/go/kWb3uHky), then extended and documented independently._
